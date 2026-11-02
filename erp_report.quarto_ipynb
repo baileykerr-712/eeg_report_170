@@ -23,7 +23,7 @@
         "\n",
         "## Setup"
       ],
-      "id": "c722fe09"
+      "id": "149dd9ac"
     },
     {
       "cell_type": "code",
@@ -37,7 +37,7 @@
         "# Note how we can import a custom preprocessing function from a local script\n",
         "from scripts.preproc import preprocess"
       ],
-      "id": "fd9ee148",
+      "id": "7d3078a2",
       "execution_count": null,
       "outputs": []
     },
@@ -50,7 +50,7 @@
         "RAW_PATH = Path(\"data/raw\")\n",
         "PROCESSED_PATH = Path(\"data/processed\")"
       ],
-      "id": "5c703727",
+      "id": "a926cc84",
       "execution_count": null,
       "outputs": []
     },
@@ -89,7 +89,7 @@
         "\n",
         "#### Preprocessing parameters"
       ],
-      "id": "a2576de7"
+      "id": "7f7d22a4"
     },
     {
       "cell_type": "code",
@@ -104,7 +104,7 @@
         "# To use an average reference, replace [\"P9\", \"P10\"] with None \n",
         "REFERENCE = [\"P9\",\"P10\"]"
       ],
-      "id": "29c445e7",
+      "id": "088b3c78",
       "execution_count": null,
       "outputs": []
     },
@@ -114,7 +114,7 @@
       "source": [
         "#### Epoching parameters"
       ],
-      "id": "4ea254e5"
+      "id": "67bf7273"
     },
     {
       "cell_type": "code",
@@ -133,7 +133,7 @@
         "    \"eog\": 250e-6\n",
         "}"
       ],
-      "id": "59dcb7af",
+      "id": "8b86a152",
       "execution_count": null,
       "outputs": []
     },
@@ -145,7 +145,7 @@
         "\n",
         "### Preprocessing"
       ],
-      "id": "3e38cf92"
+      "id": "aa277d56"
     },
     {
       "cell_type": "code",
@@ -171,7 +171,7 @@
         "    \n",
         "    processed.save(PROCESSED_PATH / f\"{subj_ID}_raw.fif.gz\", overwrite = True)\n"
       ],
-      "id": "bdb4523a",
+      "id": "073b1772",
       "execution_count": null,
       "outputs": []
     },
@@ -181,7 +181,7 @@
       "source": [
         "### Epoching and averaging"
       ],
-      "id": "737bb1a9"
+      "id": "61a69229"
     },
     {
       "cell_type": "code",
@@ -211,7 +211,7 @@
         "        av = epochs[cond].average()\n",
         "        ss_avs[cond].append(av)"
       ],
-      "id": "4ac966a2",
+      "id": "d050c4bf",
       "execution_count": null,
       "outputs": []
     },
@@ -221,7 +221,7 @@
       "source": [
         "### Grand average"
       ],
-      "id": "0c1681dd"
+      "id": "388a83f7"
     },
     {
       "cell_type": "code",
@@ -236,7 +236,7 @@
         "    grand = grand_average(ss_avs[cond])\n",
         "    grand_avs[cond] = grand"
       ],
-      "id": "7e60b6a0",
+      "id": "ff4bbba1",
       "execution_count": null,
       "outputs": []
     },
@@ -252,7 +252,7 @@
         "Set the parameters for the specified analysis window, which will include dotted vertical lines marking the analysis window on the plot.\n",
         "Note: for some components, @kappenman2021 refer to two electrode sites. If this is the case for your chosen component, the analysis requires a consideration of lateralisation; please make an appointment to discuss the required analysis tweaks with Ina."
       ],
-      "id": "bbd5a382"
+      "id": "0e0433d5"
     },
     {
       "cell_type": "code",
@@ -265,7 +265,7 @@
         "\n",
         "plot_evokeds(grand_avs, picks = selected_electrode, invert_y = True, title = plot_title, vlines = [analysis_window_start, analysis_window_end])\n"
       ],
-      "id": "d3148a4d",
+      "id": "295f84bb",
       "execution_count": null,
       "outputs": []
     },
@@ -283,7 +283,7 @@
         "\n",
         "*Note: this document is set up to automatically generate a reference list via a bib file. We will look at how to do this in the week 9 workshop.*\n"
       ],
-      "id": "3851a1cd"
+      "id": "342a31d0"
     }
   ],
   "metadata": {

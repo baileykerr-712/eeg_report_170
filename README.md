@@ -1,3 +1,231 @@
-# Data Science - EEG Report
+---
+title: "N170 analysis report: Face perception"
+author: "Bailey Kerr"
+date: "2nd November 2026"
+format: 
+    html:
+        embed-resources: true
+        toc: true
+        toc-depth: 3
+        code-fold: true
+        theme: flatly
+execute:
+    warning: false
+    message: false
+bibliography: "erp_report.bib"
+---
 
-This repository provides a template for a reproducible ERP analysis report for the course *Data Science for Cognitive Neuroscience and Psychology* at Adelaide University in 2026.
+## Setup
+
+```{python}
+from pathlib import Path
+
+from mini_mne import SimpleRaw, SimpleEpoch, grand_average, plot_evokeds
+
+# Note how we can import a custom preprocessing function from a local script
+from scripts.preproc import preprocess
+
+```
+
+```{python}
+RAW_PATH = Path("data/raw")
+PROCESSED_PATH = Path("data/processed")
+```
+
+## Introduction
+
+### Overview
+
+The N170 is an ERP (event-related potential) component in EEG recordings that occurs 170ms after stimulus onset (ranges from 150 to 200ms) (Caharel & Rossion, 2021). It has a negative polarity, and maximal negativity occurs over occipital-temporal electrode sites, specifically PO7 (left side) and PO8 (right side), but with larger responses found in the right hemisphere (Caharel & Rossion, 2021). This ERP response is related to face perception. 
+
+### First observations of the N170
+
+This ERP component was first discovered by Bentin and colleagues (1996), where they aimed to explore face perception using EEGs. Subjects counted the number of occurrences of object pictures, with other stimuli added such as unfamiliar human faces, inverted and distorted faces, animal faces and nonface stimuli. Human faces were evoked negative potentials around 170ms post-onset, which did not occur for animals, cars, furniture and other objects. Distorted faces evoked similar amplitudes with an N170 effect. However, Bötzel and Grüsser conducted two experiments in 1989; the first was drawings of human faces and inanimate objects, which evoked a P150 response, and the second one composed of photos of human faces and inanimate objects, elicited an N150 response. These authors also thought this potential originated from the limbic system rather than the occipitotemporal cortex. This claim has since been found incorrect from Bentin and colleagues and subsequent studies. 
+
+### What conditions does it occur under?
+
+The N170 response, elicited by human faces, has a much larger amplitude and shorter latency than non-face objects (Bentin et al., 1996). Researchers have found that inverted faces elicit N170 responses that are larger in amplitude and have a delayed latency (Rossion et al., 1999). They suggest that the loss of configural face information slows down and increases the difficulty of face processing. Eye movements are also found to elicit N170 responses, often developing quicker than facial recognition and produce a larger response and shorter latency (Taylor et al., 2001). Different types of emotional facial expressions elicit varying amplitudes of N170 responses; fear conditions compared to neutral conditions elicited a greater N170 amplitude at inferior occipito-temporal electrode sites (Blau et al., 2007). Researchers also found that angry facial expressions elicited larger N170 responses than happy expressions (Krombholz et al., 2007). Both of these results may indicate an increased need for processing capacity due to greater perceptual salience. 
+
+### Functional significance
+
+There are many functional purposes of this ERP component. The first major purpose is facial recognition and detection; the N170 has been found to be involved in later stages of structural encoding where global face configurations are generated to be subsequently used by face recognition processes (Eimer, 2000). This process is used by our brains in recognising friends, family and colleagues when you see them, especially from a distance. The N170 also is important for processing emotional expressions; this early processing can modulate how one can adjust their behaviour appropriately. For people who have difficulty with social interactions, such as people with Autism, evidence has shown that there are significant associations between facial recognition abilities and social behaviour (adaptive functioning, verbal and non-verbal intelligence) (Trevisan & Birmingham, 2016). Finally, this ERP component has been linked to tracking the location of visual gaze; research shows larger N170 responses were elicited when participants viewed faces with averted gazes compared to straight gazes (Itier et al., 2007). This can be used to understand what people are attended to and where their attention lies, just based off their gaze. 
+
+## Methods
+
+Complete the following subsections using the information from @kappenman2021. Don't forget to mention that the 
+
+### Participants
+
+* Data was collected from the ERP CORE resource (Kappenman et al., 2021) under a Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+
+40 participants were involved in this study (25 female, 15 male), with a mean age of M = 21.5 (SD = 2.87), an age range of 18-30, with 38 participants being right handed. Inclusion criteria included competence in English, normal or corrected-to-normal vision, normal colour perception and no history of neurological injury or disease. Exclusion criteria after data collection included participants with more than 25% of trials containing an artifact, Participants were also excluded if their accuracy was below 75%, or less than 50% of trials remained. With these parameters in place, participants “001”, “005” and “016” were excluded. 
+
+```{python}
+EXCLUDE = ["001", "005", "016"]
+```
+
+### Procedure
+
+Participants took part in a face perception task. They were shown an image of a car, a face or a scrambled face, which was positioned at the centre of the screen, and responding whether the stimulus was a car or face “object” or a scrambled face or scrambled car “texture”. Stimuli were shown for 300ms, followed by a 1100-1300ms break.
+
+### EEG recording
+
+The Biosemi ActiveTwo recording system recorded a continuous EEG with active electrodes (Biosemi B.V., Amsterdam, the Netherlands). An elastic cap was used that contained 30 scalp electrodes, placed in accordance with the International 10/20 System. N170 responses were measured at the PO8 electrode. A common mode sense (CMS) was located at PO1, whilst the driven right leg (DRL) was located at PO2. The vertical electrooculogram (VEOG) and horizontal electrooculogram (VEOG) electrodes, which records eye movements, were placed below the right eye and lateral to the external canthus of each eye respectively. Signals were low-pass filtered using a fifth-order sinc filter with a half-power cutoff at 204.8 Hz, digitised at 1024 Hz with 24 bits of resolution.
+
+### Analysis parameters
+
+For the N170 ERP component, analysis occurred at electrode PO8, located above the occipitotemporal scalp region. The data was stimulus-locked, with segmented epochs extending from 200ms before stimulus onset to 800ms after stimulus onset. Baseline correction was performed from 200ms before stimulus onset to stimulus onset (0ms). 
+
+#### Preprocessing parameters
+
+```{python}
+
+FILTER_SETTINGS = {
+    "low_cutoff": 0.1,
+    "high_cutoff": 30.0
+}
+
+REFERENCE = None
+
+```
+
+#### Epoching parameters
+
+```{python}
+TMIN = -0.2
+TMAX = 0.8 
+
+BASELINE = (-0.2,0)
+
+CONDITIONS = ["stimulus/face", "stimulus/car"]
+
+REJECT = {
+    "eeg": 150e-6,
+    "eog": 250e-6
+}
+
+```
+
+## Data analysis
+
+### Preprocessing
+
+```{python}
+#| eval: true
+#| output: false
+
+for raw_file in RAW_PATH.glob("*_raw.fif.gz"):
+
+    subj_ID = raw_file.stem.split("_")[0]
+
+    raw = SimpleRaw(raw_file)
+
+  
+    processed = preprocess(raw, 
+                            reref_params = REFERENCE, 
+                            filter_low_cutoff = FILTER_SETTINGS["low_cutoff"], 
+                            filter_high_cutoff = FILTER_SETTINGS["high_cutoff"])
+    
+    processed.save(PROCESSED_PATH / f"{subj_ID}_raw.fif.gz", overwrite = True)
+
+
+```
+
+### Epoching and averaging
+
+```{python}
+#| output: false
+
+ss_avs = {}
+
+for cond in CONDITIONS:
+    ss_avs[cond] = []
+
+for processed_file in PROCESSED_PATH.glob("*_raw.fif.gz"):
+    
+    subj_ID = processed_file.stem.split("_")[0]
+
+    if subj_ID in EXCLUDE:
+        continue
+
+    processed = SimpleRaw(processed_file)
+
+    events, event_id = processed.get_events()
+    print(event_id)
+
+    epochs = SimpleEpoch(processed, events, event_id, tmin = TMIN, tmax = TMAX, baseline = BASELINE, reject = REJECT)
+
+    for cond in CONDITIONS:
+        if len(epochs[cond])== 0:
+            print(f"Skipping {subj_ID} for {cond}: no epochs survived rejection.")
+            continue
+        av = epochs[cond].average()
+        ss_avs[cond].append(av)
+
+```
+
+### Grand average
+
+```{python}
+#| output: false
+
+grand_avs = {}
+
+for cond in CONDITIONS:
+    grand = grand_average(ss_avs[cond])
+    grand_avs[cond] = grand
+```
+
+## Results
+
+### Grand average
+
+```{python}
+selected_electrode = "PO8"
+plot_title = "Grand average for N170: Face vs Car stimuli"
+analysis_window_start = 0.11
+analysis_window_end = 0.15
+
+plot_evokeds(grand_avs, picks = selected_electrode, title = plot_title, vlines = [analysis_window_start, analysis_window_end])
+```
+
+## Discussion and reflection
+
+The results from the EEG analysis found that the N170 component was larger and slighter earlier for car stimuli than face stimuli, producing similar findings to those found in Kappenman et al (2021). The onset latency was around 120ms for face stimuli and 140ms for car stimuli, with face stimuli onsetting roughly 20-30ms before the car stimuli. This was roughly 50ms later than the onset latency found by Kappenman and colleagues (95.76ms). The grand average plot found negative polarity for face and car stimuli, with amplitudes peaking at around -0.5µV and 2µV respectively. This was consistent with the literature. Peak latency in this study was around 180ms for face stimuli and 200ms for car stimuli, occurring much later than what was found in the literature (131.44ms). One reason for this difference is that the ERP CORE corrects event timing to account for the delay between a stimulus sent from the computer and the LCD monitor displaying it, which was not corrected for this data.
+
+Applying the analysis to a new dataset was relatively straightforward but also posted a few challenges. Downloading data from the ERP CORE and putting it Positron was initially difficult, but it turns out a small detail such as naming the folder wrong was the only issue. Replacing parameters and analysis electrodes was simple, just requiring a thorough read of Kappenman and colleagues’ paper. Initial runs of the code didn’t work (empty epochs), so I had to trace back to preprocessing steps, parameters and conditions. Eventually, I found that I didn’t change the conditions for the new dataset and had to navigate to the README page to find the correct ones. Finally, my grand average plot looked different to the literature. I’d tried to change the referencing electrode to None, but forgot to take brackets away, and only realised this late in writing the report. These difficulties have taught me that I need to pay closer attention to minor details and thoroughly check my code, because these can have large impacts on my report (such as errors in codes, completely different graphs). Spending more time practising coding exercises and familiarising myself with Python language and syntax may reduce these issues in the future.
+
+
+## AI declaration
+
+ChatGPT and Claude were used to assist with spelling and grammar suggestions, suggestions for research papers and provide some tips to mitigate errors when coding.
+
+## References
+
+Bentin, S., Allison, T., Puce, A., Perez, E., & McCarthy, G. (1996). Electrophysiological Studies of Face Perception in Humans. Journal of Cognitive Neuroscience, 8(6), 551–565. https://doi.org/10.1162/jocn.1996.8.6.551
+
+Blau, V. C., Maurer, U., Tottenham, N., & McCandliss, B. D. (2007). The face-specific N170 component is modulated by emotional facial expression. Behavioral and Brain Functions, 3, Article 7. https://doi.org/10.1186/1744-9081-3-7
+
+Bötzel, K., & Grüsser, O. J. (1989). Electric brain potentials evoked by pictures of faces and non-faces: A search for “face-specific” EEG-potentials. Experimental Brain Research, 77(2), 349–360. https://doi.org/10.1007/BF00274992
+
+Caharel, S., & Rossion, B. (2021). The N170 is Sensitive to Long-term (Personal) Familiarity of a Face Identity. Neuroscience, 458, 244–255. https://doi.org/10.1016/j.neuroscience.2020.12.036
+
+Eimer, M. (2000). The face-specific N170 component reflects late stages in the structural encoding of faces. NeuroReport, 11(10), 2319–2324. 
+
+Itier, R. J., Alain, C., Kovacevic, N., & McIntosh, A. R. (2007). Explicit versus implicit gaze processing assessed by ERPs. Brain Research, 1177, 79–89. https://doi.org/10.1016/j.brainres.2007.07.094 
+
+Kappenman, Emily S., Jaclyn L. Farrens, Wendy Zhang, Andrew X. Stewart, and Steven J. Luck. 2021. “ERP CORE: An Open Resource for Human Event-Related Potential Research.” NeuroImage 225 (January): 117465. https://doi.org/10.1016/j.neuroimage.2020.117465.
+
+Krombholz, A., Schaefer, F., & Boucsein, W. (2007). Modification of N170 by different emotional expression of schematic faces. Biological Psychology, 76(3), 156–162. https://doi.org/10.1016/j.biopsycho.2007.07.004
+
+Rossion, B., Delvenne, J.-F., Debatisse, D., Goffaux, V., Bruyer, R., Crommelinck, M., & Guérit, J.-M. (1999). Spatio-temporal localization of the face inversion effect: An event-related potentials study. Biological Psychology, 50(3), 173–189. https://doi.org/10.1016/S0301-0511(99)00013-7
+
+Taylor, M. J., Edmonds, G. E., McCarthy, G., & Allison, T. (2001). Eyes first! Eye processing develops before face processing in children. NeuroReport, 12(8), 1671–1676. https://doi.org/10.1097/00001756-200106130-00031
+
+Trevisan, D. A., & Birmingham, E. (2016). Are emotion recognition abilities related to everyday social functioning in ASD? A meta-analysis. Research in Autism Spectrum Disorders, 32, 24–42. https://doi.org/10.1016/j.rasd.2016.08.004
+
+
+
+
+
+    
